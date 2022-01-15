@@ -42,7 +42,7 @@ end
 
 function screen_api:getKeyboards()
     local klist = {}
-    for addr in OpenComputers.Component.List("keyboard", true) do
+    for addr in OpenComputers.Machines[self.machine_address]:ListComponent("keyboard", true) do
         klist[#klist+1] = addr
     end
     return klist
@@ -123,15 +123,6 @@ end
 
 util.AddNetworkString("opencomputers-send-screen-data")
 
-local function new_screen(addr, width, height)
-    net.Start("opencomputers-send-screen-data")
-        net.WriteUInt(3, 8)
-        net.WriteString(addr)
-        net.WriteInt(width, 16)
-        net.WriteInt(height, 16)
-    net.Broadcast()
-end
-
 local function send_char(addr, x, y, char, fg, bg)
     net.Start("opencomputers-send-screen-data")
         net.WriteUInt(1, 8)
@@ -141,6 +132,23 @@ local function send_char(addr, x, y, char, fg, bg)
         net.WriteString(char)
         net.WriteUInt(fg, 32)
         net.WriteUInt(bg, 32)
+    net.Broadcast()
+end
+local function set_resolution(addr, width, height)
+    net.Start("opencomputers-send-screen-data")
+        net.WriteUInt(2, 8)
+        net.WriteString(addr)
+        net.WriteInt(width, 16)
+        net.WriteInt(height, 16)
+    net.Broadcast()
+end
+local function new_screen(addr, width, height, tier)
+    net.Start("opencomputers-send-screen-data")
+        net.WriteUInt(3, 8)
+        net.WriteString(addr)
+        net.WriteInt(width, 16)
+        net.WriteInt(height, 16)
+        net.WriteInt(tier, 16)
     net.Broadcast()
 end
 local function send_str(addr, x, y, text, vertical, fg, bg)
@@ -156,6 +164,20 @@ local function send_str(addr, x, y, text, vertical, fg, bg)
     net.Broadcast()
 end
 
+local function fill_char(addr, x1, y1, x2, y2, char, fg, bg)
+    net.Start("opencomputers-send-screen-data")
+        net.WriteUInt(5, 8)
+        net.WriteString(addr)
+        net.WriteInt(x1, 16)
+        net.WriteInt(y1, 16)
+        net.WriteInt(x2, 16)
+        net.WriteInt(y2, 16)
+        net.WriteString(char)
+        net.WriteUInt(fg, 32)
+        net.WriteUInt(bg, 32)
+    net.Broadcast()
+end
+--[[
 local function send_buffer(buf, ply)
     net.Start("opencomputers-send-screen-data")
         net.WriteInt(#buf[1], 32)
@@ -169,15 +191,7 @@ local function send_buffer(buf, ply)
         end
     net.Send(ply)
 end
-
-local function set_resolution(addr, width, height)
-    net.Start("opencomputers-send-screen-data")
-        net.WriteUInt(2, 8)
-        net.WriteString(addr)
-        net.WriteInt(width, 16)
-        net.WriteInt(height, 16)
-    net.Broadcast()
-end
+]]
 
 local function init_buffer(width, height)
     local tbl = {}
@@ -192,6 +206,21 @@ local function init_buffer(width, height)
     return tbl
 end
 
+function screen_api:getColor(color)
+    if self.tier == 3 then
+        local r, g, b = extract(color)
+        r=math.floor(math.floor(r*5/255+0.5)*255/5+0.5)
+        g=math.floor(math.floor(g*7/255+0.5)*255/7+0.5)
+        b=math.floor(math.floor(b*4/255+0.5)*255/4+0.5)
+        local defc = r*65536 + g*256 + b
+        return defc
+    elseif self.tier == 2 then
+        return color
+    else
+        if color > 0 then return 0xffffff else return 0 end
+    end
+end
+
 function screen_api:getForeground()
     return self.foreground, false
 end
@@ -202,8 +231,11 @@ function screen_api:setForeground(value, palette)
         print(debug.traceback())
     end
 
-    --todo
-    self.foreground = value//getColor()
+    local old = self.foreground
+
+    self.foreground = self:getColor(value)
+
+    return old, false
 end
 
 function screen_api:getBackground()
@@ -212,12 +244,16 @@ end
 
 function screen_api:setBackground(value, palette)
     if palette then
+        --todo
         print("attemp to set palette / background")
         print(debug.traceback())
     end
 
-    --todo
-    self.background = value//getColor()
+    local old = self.background
+
+    self.background = self:getColor(value)
+
+    return old, false
 end
 
 function screen_api:getDepth()
@@ -233,7 +269,27 @@ function screen_api:maxDepth()
 end
 
 function screen_api:fill(x1, y1, w, h, char)
-    return -- todo
+    x1, y1, w, h = math.Truncate(x1), math.Truncate(y1), math.Truncate(w), math.Truncate(h)
+    if w <= 0 or h <= 0 then
+        return true
+    end
+    char = utf8.sub(char, 1, 1)
+    local x2 = x1+w-1
+    local y2 = y1+h-1
+    if x2 < 1 or y2 < 1 or x1 > self.width or y1 > self.height then
+        return true
+    end
+    x1, y1, x2, y2 = math.max(x1, 1), math.max(y1, 1), math.min(x2, self.width), math.min(y2, self.height)
+    --(addr, x1, y1, x2, y2, char, fg, bg)
+    fill_char(self.address, x1, y1, x2, y2, char, self.foreground, self.background)
+    for y = y1, y2 do
+        for x = x1, x2 do
+            self.buffer[y][x].char = char
+            self.buffer[y][x].fg = self.foreground
+            self.buffer[y][x].bg = self.background
+        end
+    end
+    return true
 end
 
 function screen_api:getResolution()
@@ -259,7 +315,6 @@ function screen_api:setResolution(newwidth, newheight)
 end
 
 function screen_api:maxResolution()
-    print(123, 123)
     return self.maxwidth, self.maxheight
 end
 
@@ -279,6 +334,7 @@ end
 
 function screen_api:set(x, y, val, vertical)
     val = tostring(val)
+    val = utf8.sub(val, 1, vertical and self.height or self.width)
 
     x, y = math.Truncate(x), math.Truncate(y)
     send_str(self.address, x, y, val, vertical, self.foreground, self.background)
@@ -340,7 +396,7 @@ local function Create(address, maxwidth, maxheight, tier)
         }
     }, {__index = screen_api})
     --loadPalette(tbl.tier)
-    new_screen(tbl.address, tbl.width, tbl.height)
+    new_screen(tbl.address, tbl.width, tbl.height, tbl.tier)
     tbl.buffer = init_buffer(tbl.width, tbl.height)
     return tbl
 end

@@ -1594,7 +1594,7 @@ local function main()
 
         debug.sethook(co, checkDeadline, "", hookInterval)
         local result = table.pack(coroutine.resume(co, table.unpack(args, 1, args.n)))
-        print(debug.traceback(co))
+        --print(debug.traceback(co))
         args = nil -- clear upvalue, avoids trying to persist it
         if not result[1] then
             --print("if 1")

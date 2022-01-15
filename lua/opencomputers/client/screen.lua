@@ -5,16 +5,60 @@ local height = 25
 
 OpenComputers.Buffer = OpenComputers.Buffer or {}
 
+local tex = GetRenderTarget("OpenComputers1", 2048, 1024)
+local mat = CreateMaterial("OpenComputers1", "UnlitGeneric", {
+    ["$basetexture"] = tex:GetName(),
+    ["$translucent"] = "1"
+})
+local function getColor(a)
+
+    local r = bit.rshift(a, 16)
+    local g = bit.band(bit.rshift(a, 8),255)
+    local b = bit.band(a,255)
+
+    return r, g, b
+end
+
+local bg_color
+local fg_color
+
+local function prepare()
+    
+    render.PushRenderTarget(tex)
+    cam.Start2D()
+
+    render.Clear(0,0,0,0)
+
+    cam.End2D()
+    render.PopRenderTarget()
+end
+prepare()
+local function drawChar(x, y, fg, bg, char)
+    render.PushRenderTarget(tex, 0, 0, 2048, 1024)
+    cam.Start2D()
+
+    surface.SetDrawColor(getColor(bg))
+    surface.DrawRect(x*8, y*16, 8, 16)
+    
+    surface.SetTextColor(getColor(fg))
+    surface.SetTextPos(x*8, y*16)
+    surface.DrawText(char or "")
+
+    cam.End2D()
+    render.PopRenderTarget()
+end
+
 local function setsize(w, h)
     local tbl = {}
 
+    surface.SetFont("OpenComputersFont")
     for i = 1, h do
         tbl[i] = {}
         for j = 1, w do
             tbl[i][j] = {char = "", fg = 0xffffff, bg = 0x000000}
+            drawChar(j-1, i-1, 0xffffff, 0x000000, " ")
         end
     end
-
 
     OpenComputers.Buffer = tbl
 end
@@ -30,7 +74,9 @@ net.Receive("opencomputers-send-screen-data", function()
         local fg = net.ReadUInt(32)
         local bg = net.ReadUInt(32)
 
+        surface.SetFont("OpenComputersFont")
         OpenComputers.Buffer[y][x] = {char = c, fg = fg, bg = bg}
+        drawChar(x-1,y-1,fg,bg,c)
     elseif typ == 2 then
         
     elseif typ == 3 then
@@ -48,6 +94,7 @@ net.Receive("opencomputers-send-screen-data", function()
         local fg = net.ReadUInt(32)
         local bg = net.ReadUInt(32)
 
+        surface.SetFont("OpenComputersFont")
         for i = 1, utf8.len(text) do
             local char = utf8.sub(text, i, i+1)
             
@@ -55,8 +102,31 @@ net.Receive("opencomputers-send-screen-data", function()
             if not OpenComputers.Buffer[y][x] then continue end
 
             OpenComputers.Buffer[y][x] = {char = char, fg = fg, bg = bg}
+            drawChar(x-1,y-1,fg,bg,char)
 
-            x = x + 1
+            if not vertical then
+                x = x + 1
+            else
+                y = y + 1
+            end
+        end
+    elseif typ == 5 then
+        local addr = net.ReadString()
+        local x1 = net.ReadInt(16)
+        local y1 = net.ReadInt(16)
+        local x2 = net.ReadInt(16)
+        local y2 = net.ReadInt(16)
+        local ch = net.ReadString()
+        local fg = net.ReadUInt(32)
+        local bg = net.ReadUInt(32)
+
+        print(x1, y1, x2, y2, ch, fg, bg)
+        surface.SetFont("OpenComputersFont")
+        for y = y1,y2 do
+            for x = x1,x2 do
+                OpenComputers.Buffer[y][x] = {char = ch, fg = fg, bg = bg}
+                drawChar(x-1,y-1,fg,bg,char)
+            end
         end
     end
 end)
@@ -69,43 +139,6 @@ local font = surface.CreateFont("OpenComputersFont", {
     antialias = false,
 })
 
-local function getColor(a)
-
-    local r = bit.rshift(a, 16)
-    local g = bit.band(bit.rshift(a, 8),255)
-    local b = bit.band(a,255)
-
-    return Color(r, g, b)
-end
-
-
-local fg_color = -math.huge
-local bg_color = -math.huge
-
-local function getColor2(a)
-
-    --if bg_color == a then return end
-    --bg_color = a
-
-    local r = bit.rshift(a, 16)
-    local g = bit.band(bit.rshift(a, 8),255)
-    local b = bit.band(a,255)
-
-    surface.SetDrawColor(r, g, b, 255)
-end
-
-local function getColor3(a)
-
-    --if fg_color == a then return end
-    --fg_color = a
-
-    local r = bit.rshift(a, 16)
-    local g = bit.band(bit.rshift(a, 8),255)
-    local b = bit.band(a,255)
-
-    surface.SetTextColor(r, g, b, 255)
-end
-
 hook.Remove("HUDPaint", "RenderScreen")
 ----[[
 hook.Add("HUDPaint", "RenderScreen", function()
@@ -114,20 +147,17 @@ hook.Add("HUDPaint", "RenderScreen", function()
     local h = #OpenComputers.Buffer
     local w = #OpenComputers.Buffer[1]
 
-    surface.SetFont("OpenComputersFont")
-    for i = 1, h do
-        for j = 1, w do
-            local tbl = OpenComputers.Buffer[i][j]
-            getColor2(tbl.bg)
-            surface.DrawRect((j-1)*8, (i-1)*16, 8, 16)
-            if tbl.char ~= "" then
-                getColor3(tbl.fg)
-                surface.SetTextPos((j-1)*8, (i-1)*16)
-                surface.DrawText(tbl.char)
-                --draw.SimpleText(tbl.char, "OpenComputersFont", (j-1)*8, (i-1)*16, getColor(tbl.fg))
-            end
-        end
-    end
+    --surface.SetFont("OpenComputersFont")
+
+    render.PushFilterMag(1)
+    render.PushFilterMin(1)
+
+    surface.SetDrawColor(color_white)
+    surface.SetMaterial(mat)
+    surface.DrawTexturedRect(0, 0, 2048, 1024)
+
+    render.PopFilterMag()
+    render.PopFilterMin()
 
     
     --draw.SimpleText(width, "OpenComputersFont", 0, 0, Color(255, 255, 255))

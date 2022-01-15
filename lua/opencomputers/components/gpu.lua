@@ -238,11 +238,8 @@ local function Create(address, maxwidth, maxheight, maxtier, machine_address)
         }
     }, {__index = gpu_api})
     invoke = function(address, method, ...)
-        print(OpenComputers.Machines[machine_address])
-        print(address, method, ...)
-        local a = table.pack(OpenComputers.Machines[machine_address]:InvokeComponent(address, method, ...))
-        PrintTable(a)
-        return table.unpack(a, 1, a.n)
+        print("=========== GPU METHOD INVOKE", method, ...)
+        return OpenComputers.Machines[machine_address]:InvokeComponent(address, method, ...)
     end
     return tbl
 end
