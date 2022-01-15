@@ -13,7 +13,7 @@ function ENT:Initialize()
 		phys:Wake()
 	end
 
-	self.TPS = 20
+	self.TPS = 30
 	self.Time = CurTime()
 
 	self:InitEmulator()
@@ -38,7 +38,7 @@ function ENT:InitEmulator()
 		starttime = SysTime(),
 		deadline = SysTime(),
 		signals = {},
-		totalMemory = 2*1024*1024,
+		totalMemory = 1*1024*1024*1024*1024,
 		insynccall = false,
 		address = OpenComputers.Component.GenUUID(),
 		boot_address = "",
@@ -285,7 +285,7 @@ function ENT:Think()
             self:ResumeMachine()
         end
     
-        time = CurTime()
+        self.Time = CurTime()
     end
 end
 

@@ -7,9 +7,11 @@ OpenComputers.Buffer = OpenComputers.Buffer or {}
 
 local tex = GetRenderTarget("OpenComputers1", 2048, 1024)
 local mat = CreateMaterial("OpenComputers1", "UnlitGeneric", {
-    ["$basetexture"] = tex:GetName(),
-    ["$translucent"] = "1"
+    ["$basetexture"] = tex:GetName()
 })
+
+OpenComputers.Material = mat
+
 local function getColor(a)
 
     local r = bit.rshift(a, 16)
@@ -27,12 +29,11 @@ local function prepare()
     render.PushRenderTarget(tex)
     cam.Start2D()
 
-    render.Clear(0,0,0,0)
+    render.Clear(0,0,0,255)
 
     cam.End2D()
     render.PopRenderTarget()
 end
-prepare()
 local function drawChar(x, y, fg, bg, char)
     render.PushRenderTarget(tex, 0, 0, 2048, 1024)
     cam.Start2D()
@@ -83,7 +84,9 @@ net.Receive("opencomputers-send-screen-data", function()
         local addr = net.ReadString()
         local w = net.ReadInt(16)
         local h = net.ReadInt(16)
+        local tier = net.ReadInt(16)
         setsize(w, h)
+        prepare()
     elseif typ == 4 then 
         local addr = net.ReadString()
         local x = net.ReadInt(16)
@@ -140,27 +143,41 @@ local font = surface.CreateFont("OpenComputersFont", {
 })
 
 hook.Remove("HUDPaint", "RenderScreen")
-----[[
+
+concommand.Add("opencomputers_screen", function()
+    local width = 80*8
+    local height = 25*16
+
+    local DFrame = vgui.Create("DFrame")
+    DFrame:SetSize(width+10, height+34)
+    DFrame:SetTitle("OpenComputers Screen")
+    DFrame:Center()
+    DFrame:MakePopup()
+
+    local panel = vgui.Create("DPanel", DFrame)
+    panel:Dock(FILL)
+
+    function panel:Paint( w, h )
+        surface.SetDrawColor(color_black)
+        surface.DrawRect(0, 0, w, h)
+
+        render.PushFilterMag(1)
+        render.PushFilterMin(1)
+
+        surface.SetDrawColor(color_white)
+        surface.SetMaterial(OpenComputers.Material)
+        surface.DrawTexturedRectUV(0, 0, w, h, 0, 0, w/2048, h/1024)
+
+        render.PopFilterMag()
+        render.PopFilterMin()
+    end
+end)
+--[[
 hook.Add("HUDPaint", "RenderScreen", function()
 
-    if not OpenComputers.Buffer[1] then return end
-    local h = #OpenComputers.Buffer
-    local w = #OpenComputers.Buffer[1]
-
-    --surface.SetFont("OpenComputersFont")
-
-    render.PushFilterMag(1)
-    render.PushFilterMin(1)
-
-    surface.SetDrawColor(color_white)
-    surface.SetMaterial(mat)
-    surface.DrawTexturedRect(0, 0, 2048, 1024)
-
-    render.PopFilterMag()
-    render.PopFilterMin()
 
     
     --draw.SimpleText(width, "OpenComputersFont", 0, 0, Color(255, 255, 255))
     --draw.SimpleText(height, "OpenComputersFont", 0, 16, Color(255, 255, 255))
 end)
---]]
+]]
