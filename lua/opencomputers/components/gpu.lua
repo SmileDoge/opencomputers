@@ -8,7 +8,7 @@ function gpu_api:bind(address, reset )
     if reset == nil then
         reset = true
     end
-    local thing = OpenComputers.Component.Exists(address)
+    local thing = OpenComputers.Machines[self.machine_address]:ExistsComponent(address)
     if thing == nil then
         return nil, "invalid address"
     elseif thing ~= "screen" then

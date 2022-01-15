@@ -53,7 +53,7 @@ local tooLongWithoutYielding = setmetatable({}, {
 local function checkDeadline()
     if computer.realTime() > deadline then
         local thr = coroutine.running()
-        debug.sethook(coroutine.running(), checkDeadline, "", 1)
+        debug.sethook(thr, checkDeadline, "", 1)
         if not hitDeadline then
             deadline = deadline + 0.5
         end
@@ -65,7 +65,7 @@ local function checkDeadline()
 end
 local function pcallTimeoutCheck(...)
     local ok, timeout = ...
-    if rawequal(timeout, tooLongWithoutYielding) then
+    if type(timeout) == "string" and timeout:find("too long without yielding") then
         return ok, tostring(tooLongWithoutYielding)
     end
     return ...
