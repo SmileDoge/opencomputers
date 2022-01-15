@@ -20,21 +20,6 @@ function table.unpack(...)
     return unpack(...)
 end
 
-timeoffset = 0
-
-function start_machine()
-end
-
---start_machine()
-
-function resume_machine(...)
-    
-end
-
-local tps = 20
-local time = CurTime()
-hook.Remove("Think", "opencomputers")
-
 else
     include("opencomputers/client/screen.lua")
 end

@@ -107,7 +107,7 @@ local function getColor3(a)
 end
 
 hook.Remove("HUDPaint", "RenderScreen")
---[[
+----[[
 hook.Add("HUDPaint", "RenderScreen", function()
 
     if not OpenComputers.Buffer[1] then return end
@@ -133,4 +133,4 @@ hook.Add("HUDPaint", "RenderScreen", function()
     --draw.SimpleText(width, "OpenComputersFont", 0, 0, Color(255, 255, 255))
     --draw.SimpleText(height, "OpenComputersFont", 0, 16, Color(255, 255, 255))
 end)
-]]
+--]]

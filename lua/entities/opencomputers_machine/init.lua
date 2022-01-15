@@ -179,7 +179,7 @@ function ENT:InitEmulator()
 		system = {
 			allowBytecode = function() return false end,
 			allowGC = function() return true end,
-			timeout = function() return 0.5 end,
+			timeout = function() return 5 end,
 		},
 		unicode = {
 			char = utf8.char,
