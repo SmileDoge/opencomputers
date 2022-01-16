@@ -142,7 +142,7 @@ net.Receive("opencomputers-send-screen-data", function()
 end)
 
 local font = surface.CreateFont("OpenComputersFont", {
-    font = "Unifont",
+    font = "unscii",
     extended = true,
     size = 16,
     weight = 0,

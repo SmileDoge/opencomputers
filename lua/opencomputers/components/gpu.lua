@@ -192,6 +192,7 @@ function gpu_api:set(x, y, val, vert)
     if self.bind_address == nil then
         return nil, "no screen"
     end
+    --print(debug.traceback())
     return invoke(self.bind_address, "set", x, y, val, vert)
 end
 
@@ -238,7 +239,7 @@ local function Create(address, maxwidth, maxheight, maxtier, machine_address)
         }
     }, {__index = gpu_api})
     invoke = function(address, method, ...)
-        print("=========== GPU METHOD INVOKE", method, ...)
+        --print("=========== GPU METHOD INVOKE", method, ...)
         return OpenComputers.Machines[machine_address]:InvokeComponent(address, method, ...)
     end
     return tbl

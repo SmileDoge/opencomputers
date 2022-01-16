@@ -24,8 +24,9 @@ function table.pack(...)
     return a
 end
 
-function table.unpack(...)
-    return unpack(...)
+function table.unpack(tbl, st, en)
+    tbl.n = nil
+    return unpack(tbl, st, en)
 end
 
 else

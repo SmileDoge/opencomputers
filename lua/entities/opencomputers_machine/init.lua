@@ -23,6 +23,8 @@ function ENT:Initialize()
 end
 
 local function load(code, name, mode, env)
+	code = string.Replace(code, ".continue", "[\"continue\"]")
+	code = string.Replace(code, ":continue", "[\"continue\"]")
     local func = CompileString(code, name, true)
 	if type(func) == "string" then
 		error(func)
@@ -45,7 +47,7 @@ function ENT:InitEmulator()
 		components = {}
 	}
 
-	self.env = {
+	local env = {
 		_VERSION = "Lua 5.2",
 		assert = assert,
 		error = error,
@@ -182,6 +184,7 @@ function ENT:InitEmulator()
 			timeout = function() return 5 end,
 		},
 		unicode = {
+			--[[
 			char = utf8.char,
 			charWidth = function() return 1 end,
 			isWide = function() return false end,
@@ -192,10 +195,65 @@ function ENT:InitEmulator()
 			upper = function(str) return str end,
 			wlen = utf8.len,
 			wtrunc = function(str) return str end,
+			]]--
 		},
 		print = print,
 		PrintTable = PrintTable,
 	}
+
+	function env.unicode.char(...)
+		local args = table.pack(...)
+		for i = 1, args.n do
+			args[i] = args[i]%0x10000
+		end
+		return utf8.char(table.unpack(args))
+	end
+	function env.unicode.charWidth(ch)
+		return 1 -- todo
+	end
+	function env.unicode.isWide(ch)
+		return false -- todo
+	end
+	function env.unicode.len(str, st, en)
+		return utf8.len(str, st, en)
+	end
+	function env.unicode.lower(str)
+		return str -- todo
+	end
+	function env.unicode.upper(str)
+		return str -- todo
+	end
+	function env.unicode.reverse(str)
+		local final = ""
+		for _, v in utf8.codes(str) do
+			final = utf8.char(v) .. final
+		end
+		return final
+	end
+	function env.unicode.sub(str, st, en)
+		return utf8.sub(str, st, en)
+	end
+	function env.unicode.wlen(str)
+		return utf8.len(str)
+	end
+	function env.unicode.wtrunc(str, count)
+		if count == math.huge then
+			count = 0
+		end
+		local width = 0
+		local pos = 0
+		local len = utf8.len(str)
+		while (width < count) do
+			pos = pos + 1
+			if pos > len then
+				error("String index out of range", 0)
+			end
+			width = width + 1
+		end
+		return utf8.sub(str, 1, math.max(pos-1,0))
+	end
+	
+	self.env = env
 end
 
 function ENT:InitComponents()
@@ -239,7 +297,8 @@ function ENT:ResumeMachine(...)
 		print("yield",table.unpack(results))
 		if coroutine.status(machine.thread) ~= "dead" then
 			if type(results[2]) == "function" then
-				machine.syncfunc = results[2]
+				self:ResumeMachine(results[2]())
+				--machine.syncfunc = results[2]
 			elseif type(results[2]) == "boolean" then
 				if results[2] then
 					self:StartMachine()
