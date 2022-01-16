@@ -67,11 +67,14 @@ local function setsize(w, h)
     OpenComputers.Buffer = tbl
 end
 
+local function readheader()
+    return net.ReadUInt(8), net.ReadString(), net.ReadString()
+end
+
 net.Receive("opencomputers-send-screen-data", function()
-    local typ = net.ReadUInt(8)
+    local typ, machine_address, address = readheader()
+
     if typ == 1 then
-        
-        local addr = net.ReadString()
         local x = net.ReadInt(16)
         local y = net.ReadInt(16)
         local c = net.ReadString()
@@ -84,16 +87,6 @@ net.Receive("opencomputers-send-screen-data", function()
         drawChar(x-1,y-1,fg,bg,c)
         endrender()
     elseif typ == 2 then
-        
-    elseif typ == 3 then
-        local addr = net.ReadString()
-        local w = net.ReadInt(16)
-        local h = net.ReadInt(16)
-        local tier = net.ReadInt(16)
-        setsize(w, h)
-        prepare()
-    elseif typ == 4 then 
-        local addr = net.ReadString()
         local x = net.ReadInt(16)
         local y = net.ReadInt(16)
         local text = net.ReadString()
@@ -120,8 +113,14 @@ net.Receive("opencomputers-send-screen-data", function()
             end
         end
         endrender()
+    elseif typ == 3 then
+        local w = net.ReadInt(16)
+        local h = net.ReadInt(16)
+        local tier = net.ReadInt(16)
+        setsize(w, h)
+        prepare()
+    elseif typ == 4 then
     elseif typ == 5 then
-        local addr = net.ReadString()
         local x1 = net.ReadInt(16)
         local y1 = net.ReadInt(16)
         local x2 = net.ReadInt(16)

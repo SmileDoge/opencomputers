@@ -908,7 +908,6 @@ sandbox = {
             end
         end,
         yield = function(...) -- custom yield part for bubbling sysyields
-            print(...)
             return coroutine.yield(nil, ...)
         end,
         -- Lua 5.3.
@@ -1398,12 +1397,10 @@ libcomponent = {
     end,
     proxy = function(address)
         local type, reason = spcall(component.type, address)
-        print("========TYPE=========", type, reason)
         if not type then
             return nil, reason
         end
         local slot, reason = spcall(component.slot, address)
-        print("========SLOT=========", slot, reason)
         if not slot then
             return nil, reason
         end
@@ -1417,7 +1414,6 @@ libcomponent = {
             fields = {}
         }
         local methods, reason = spcall(component.methods, address)
-        print("======METHODS=========", methods, reason)
         if not methods then
             return nil, reason
         end

@@ -210,7 +210,7 @@ function ENT:InitComponents()
 	local eeprom = EEPROM_const(nil, eeprom_code, "EEPROM", true)
 	local filesys = FILESYS_const(nil, "opencomputers/loot/openos", "GMOD", true)
 	local computer = COMPUTER_const(self.machine.address)
-	local screen = SCREEN_const(nil, 80, 25, 3)
+	local screen = SCREEN_const(nil, 80, 25, 3, self.machine.address)
 	local gpu = GPU_const(nil, 80, 25, 3, self.machine.address)
 
 	self:ConnectComponent(computer)
@@ -239,10 +239,10 @@ function ENT:ResumeMachine(...)
 		print("yield",table.unpack(results))
 		if coroutine.status(machine.thread) ~= "dead" then
 			if type(results[2]) == "function" then
-					machine.syncfunc = results[2]
+				machine.syncfunc = results[2]
 			elseif type(results[2]) == "boolean" then
 				if results[2] then
-					boot_machine()
+					self:StartMachine()
 				else
 					error("Machine power off",0)
 				end

@@ -183,8 +183,8 @@ function gpu_api:get(x, y)
     end
     local w,h = invoke(self.bind_address, "getResolution")
     if x < 1 or x >= w+1 or y < 1 or y >= h+1 then
-		error("index out of bounds", 0)
-	end
+        error("index out of bounds", 0)
+    end
     return invoke(self.bind_address, "get", x, y)
 end
 
