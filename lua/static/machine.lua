@@ -806,8 +806,9 @@ sandbox = {
     pcall = function(...)
         return pcallTimeoutCheck(pcall(...))
     end,
-    print = print, -- in boot/*_base.lua
+    print = nil, -- in boot/*_base.lua
     PrintTable = PrintTable, -- in boot/*_base.lua
+    cprint = cprint,
     rawequal = rawequal,
     rawget = rawget,
     rawlen = rawlen,

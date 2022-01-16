@@ -409,10 +409,8 @@ function screen_api:setResolution(newwidth, newheight)
         self.height = newheight
 
         self:setResolution(newwidth, newheight)
-
-        
     end
-    table.insert(OpenComputers.Machines[self.machine_address].machine.signals, {"screen_resized", self.address, self.width, self.height})
+    table.insert(OpenComputers.GetMachine(self.machine_address).signals, {"screen_resized", self.address, self.width, self.height})
     return oldw ~= newwidth or oldh ~= newheight
 end
 
@@ -449,6 +447,7 @@ end
 function screen_api:get(x, y)
     x, y = math.Truncate(x), math.Truncate(y)
 
+    print(self.buffer[y][x].char, type(self.buffer[y][x].char))
     return self.buffer[y][x].char, self.buffer[y][x].fg, self.buffer[y][x].bg, self.buffer[y][x].fgp, self.buffer[y][x].bgp
 end
 
@@ -461,7 +460,7 @@ function screen_api:set(x, y, val, vertical)
     if vertical and x >= 1 and x <= self.width and y <= self.height then
         for _, c in utf8.codes(val) do
             if y >= 1 then
-                self.buffer[y][x].char = c
+                self.buffer[y][x].char = utf8.char(c)
                 self.buffer[y][x].fg = self.scrfgc
                 self.buffer[y][x].bg = self.scrbgc
             end
@@ -471,7 +470,7 @@ function screen_api:set(x, y, val, vertical)
     elseif not vertical and y >= 1 and y <= self.height and x <= self.width then
         for _, c in utf8.codes(val) do
             if x >= 1 then
-                self.buffer[y][x].char = c
+                self.buffer[y][x].char = utf8.char(c)
                 self.buffer[y][x].fg = self.scrfgc
                 self.buffer[y][x].bg = self.scrbgc
             end
