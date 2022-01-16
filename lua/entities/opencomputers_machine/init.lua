@@ -23,8 +23,6 @@ function ENT:Initialize()
 end
 
 local function load(code, name, mode, env)
-	code = string.Replace(code, ".continue", "[\"continue\"]")
-	code = string.Replace(code, ":continue", "[\"continue\"]")
     local func = CompileString(code, name, true)
 	if type(func) == "string" then
 		error(func)
