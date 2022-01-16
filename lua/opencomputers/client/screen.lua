@@ -34,9 +34,15 @@ local function prepare()
     cam.End2D()
     render.PopRenderTarget()
 end
-local function drawChar(x, y, fg, bg, char)
+local function initrender()
     render.PushRenderTarget(tex, 0, 0, 2048, 1024)
     cam.Start2D()
+end
+local function endrender()
+    cam.End2D()
+    render.PopRenderTarget()
+end
+local function drawChar(x, y, fg, bg, char)
 
     surface.SetDrawColor(getColor(bg))
     surface.DrawRect(x*8, y*16, 8, 16)
@@ -45,8 +51,6 @@ local function drawChar(x, y, fg, bg, char)
     surface.SetTextPos(x*8, y*16)
     surface.DrawText(char or "")
 
-    cam.End2D()
-    render.PopRenderTarget()
 end
 
 local function setsize(w, h)
@@ -57,7 +61,6 @@ local function setsize(w, h)
         tbl[i] = {}
         for j = 1, w do
             tbl[i][j] = {char = "", fg = 0xffffff, bg = 0x000000}
-            drawChar(j-1, i-1, 0xffffff, 0x000000, " ")
         end
     end
 
@@ -77,7 +80,9 @@ net.Receive("opencomputers-send-screen-data", function()
 
         surface.SetFont("OpenComputersFont")
         OpenComputers.Buffer[y][x] = {char = c, fg = fg, bg = bg}
+        initrender()
         drawChar(x-1,y-1,fg,bg,c)
+        endrender()
     elseif typ == 2 then
         
     elseif typ == 3 then
@@ -98,6 +103,7 @@ net.Receive("opencomputers-send-screen-data", function()
         local bg = net.ReadUInt(32)
 
         surface.SetFont("OpenComputersFont")
+        initrender()
         for i = 1, utf8.len(text) do
             local char = utf8.sub(text, i, i+1)
             
@@ -113,6 +119,7 @@ net.Receive("opencomputers-send-screen-data", function()
                 y = y + 1
             end
         end
+        endrender()
     elseif typ == 5 then
         local addr = net.ReadString()
         local x1 = net.ReadInt(16)
@@ -123,7 +130,7 @@ net.Receive("opencomputers-send-screen-data", function()
         local fg = net.ReadUInt(32)
         local bg = net.ReadUInt(32)
 
-        print(x1, y1, x2, y2, ch, fg, bg)
+        initrender()
         surface.SetFont("OpenComputersFont")
         for y = y1,y2 do
             for x = x1,x2 do
@@ -131,6 +138,7 @@ net.Receive("opencomputers-send-screen-data", function()
                 drawChar(x-1,y-1,fg,bg,char)
             end
         end
+        endrender()
     end
 end)
 
