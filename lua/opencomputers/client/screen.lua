@@ -5,6 +5,7 @@ local height = 25
 
 OpenComputers.Buffer = OpenComputers.Buffer or {}
 
+
 local tex = GetRenderTarget("OpenComputers1", 2048, 1024)
 local mat = CreateMaterial("OpenComputers1", "UnlitGeneric", {
     ["$basetexture"] = tex:GetName()
@@ -90,7 +91,6 @@ net.Receive("opencomputers-send-screen-data", function()
         local x = net.ReadInt(16)
         local y = net.ReadInt(16)
         local text = net.ReadString()
-        print(x, y, text)
         local vertical = net.ReadBool()
         local fg = net.ReadUInt(32)
         local bg = net.ReadUInt(32)
@@ -151,6 +151,24 @@ local font = surface.CreateFont("OpenComputersFont", {
 
 hook.Remove("HUDPaint", "RenderScreen")
 
+concommand.Add("opencomputers_test",function()
+    
+    local DFrame = vgui.Create("DFrame")
+    DFrame:SetSize(800, 600)
+    DFrame:SetTitle("OpenComputers Screen")
+    DFrame:Center()
+    DFrame:MakePopup()
+    DFrame:SetAllowNonAsciiCharacters( true )
+
+    local text = vgui.Create("RichText", DFrame)
+    text:SetSize(100, 100)
+    text:SetPos(200, 200)
+
+    function text:OneKeyCodeTyped(code)
+        print(code)
+    end
+end)
+
 concommand.Add("opencomputers_screen", function()
     local width = 80*8
     local height = 25*16
@@ -160,6 +178,7 @@ concommand.Add("opencomputers_screen", function()
     DFrame:SetTitle("OpenComputers Screen")
     DFrame:Center()
     DFrame:MakePopup()
+    DFrame:SetAllowNonAsciiCharacters( true )
 
     local panel = vgui.Create("DPanel", DFrame)
     panel:Dock(FILL)
@@ -177,6 +196,18 @@ concommand.Add("opencomputers_screen", function()
 
         render.PopFilterMag()
         render.PopFilterMin()
+    end
+
+    function panel:OnMousePressed(code)
+        local mx, my = input.GetCursorPos()
+        local px, py = panel:LocalToScreen()
+        local cx, cy = mx-px, my-py
+        local x, y = math.floor(cx/8)+1, math.floor(cy/16)+1 
+        print(x, y)
+    end
+
+    function DFrame:OnKeyCodePressed(code)
+        print(code)
     end
 end)
 --[[

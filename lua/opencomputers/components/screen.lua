@@ -447,7 +447,6 @@ end
 function screen_api:get(x, y)
     x, y = math.Truncate(x), math.Truncate(y)
 
-    print(self.buffer[y][x].char, type(self.buffer[y][x].char))
     return self.buffer[y][x].char, self.buffer[y][x].fg, self.buffer[y][x].bg, self.buffer[y][x].fgp, self.buffer[y][x].bgp
 end
 

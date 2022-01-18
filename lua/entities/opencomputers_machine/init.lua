@@ -181,20 +181,7 @@ function ENT:InitEmulator()
 			allowGC = function() return true end,
 			timeout = function() return 5 end,
 		},
-		unicode = {
-			--[[
-			char = utf8.char,
-			charWidth = function() return 1 end,
-			isWide = function() return false end,
-			len = utf8.len,
-			lower = function(str) return str end,
-			reverse = function(str) return str end,
-			sub = utf8.sub,
-			upper = function(str) return str end,
-			wlen = utf8.len,
-			wtrunc = function(str) return str end,
-			]]--
-		},
+		unicode = {},
 		print = print,
 		PrintTable = PrintTable,
 	}
@@ -261,9 +248,7 @@ function ENT:InitComponents()
 	local SCREEN_const = include("opencomputers/components/screen.lua")
 	local GPU_const = include("opencomputers/components/gpu.lua")
 
-	local eeprom_code = file.Read("opencomputers/eeprom.txt")
-
-	local eeprom = EEPROM_const(nil, eeprom_code, "EEPROM", true)
+	local eeprom = EEPROM_const(nil, "opencomputers/eeprom.txt", "EEPROM", true)
 	local filesys = FILESYS_const(nil, "opencomputers/loot/openos", "GMOD", true)
 	local computer = COMPUTER_const(self.machine.address)
 	local screen = SCREEN_const(nil, 80, 25, 3, self.machine.address)

@@ -31,6 +31,7 @@ function eeprom_api:set(code)
         return nil, "storage is readonly"
     end
     if code == nil then code = "" end
+    file.Write(self.path, code)
     self.code = code
 end
 
@@ -45,10 +46,11 @@ function eeprom_api:makeReadonly()
     self.readonly = true
 end
 
-local function Create(address, code, label, readonly)
-    return setmetatable({
+local function Create(address, path, label, readonly)
+    local tbl = setmetatable({
         address = address or OpenComputers.Component.GenUUID(),
-        code = code,
+        path = path,
+        code = "",
         data = "",
         label = label,
         readonly = readonly,
@@ -65,6 +67,8 @@ local function Create(address, code, label, readonly)
             makeReadonly = {direct = true,}
         }
     }, {__index = eeprom_api})
+    tbl.code = file.Read(path, "DATA")
+    return tbl
 end
 
 return Create, "eeprom"
