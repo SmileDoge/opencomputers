@@ -4,6 +4,7 @@ local width = 80
 local height = 25
 
 OpenComputers.Buffer = OpenComputers.Buffer or {}
+OpenComputers.Addresses = OpenComputers.Addresses or {}
 
 
 local tex = GetRenderTarget("OpenComputers1", 2048, 1024)
@@ -74,6 +75,11 @@ end
 
 net.Receive("opencomputers-send-screen-data", function()
     local typ, machine_address, address = readheader()
+
+    OpenComputers.Addresses = {
+        machine_address = machine_address,
+        address = address,
+    }
 
     if typ == 1 then
         local x = net.ReadInt(16)
@@ -169,6 +175,40 @@ concommand.Add("opencomputers_test",function()
     end
 end)
 
+--[[
+    
+local function sendheader(typ, tbl)
+    net.WriteUInt(typ, 8)
+    net.WriteString(tbl.machine_address)
+    net.WriteString(tbl.address)
+end
+--1
+function screen_api:sendChar(x, y, char, fg, bg)
+    net.Start("opencomputers-send-screen-data")
+        sendheader(1, self)
+        net.WriteInt(x, 16)
+        net.WriteInt(y, 16)
+        net.WriteString(char)
+        net.WriteUInt(fg, 32)
+        net.WriteUInt(bg, 32)
+    net.Broadcast()
+end
+]]
+
+local function sendkeyboard(code, char, down)
+    local machine_addr = OpenComputers.Addresses["machine_address"]
+    local addr = OpenComputers.Addresses["address"]
+
+    net.Start("opencomputers-send-screen-data")
+        net.WriteUInt(101, 8)
+        net.WriteString(machine_addr)
+        net.WriteString(addr)
+        net.WriteBool(down) -- true = key_down, false = key_up
+        net.WriteUInt(code, 32)
+        net.WriteUInt(char, 32)
+    net.SendToServer()
+end
+
 concommand.Add("opencomputers_screen", function()
     local width = 80*8
     local height = 25*16
@@ -206,8 +246,215 @@ concommand.Add("opencomputers_screen", function()
         print(x, y)
     end
 
+    local key_map_lwjgl = {
+        [KEY_NONE] = 0,
+
+        [KEY_F1] = 59,
+        [KEY_F2] = 60,
+        [KEY_F3] = 61,
+        [KEY_F4] = 62,
+        [KEY_F5] = 63,
+        [KEY_F6] = 64,
+        [KEY_F7] = 65,
+        [KEY_F8] = 66,
+        [KEY_F9] = 67,
+        [KEY_F10] = 68,
+        [KEY_F11] = 87,
+        [KEY_F11] = 88,
+
+        [KEY_BACKQUOTE] = 41,
+
+        [KEY_1] = 2,
+        [KEY_2] = 3,
+        [KEY_3] = 4,
+        [KEY_4] = 5,
+        [KEY_5] = 6,
+        [KEY_6] = 7,
+        [KEY_7] = 8,
+        [KEY_8] = 9,
+        [KEY_9] = 10,
+        [KEY_0] = 11,
+        [KEY_MINUS] = 12,
+        [KEY_EQUAL] = 13,
+
+        [KEY_BACKSLASH] = 0, -- ???
+
+        [KEY_BACKSPACE] = 14,
+
+        [KEY_TAB] = 15,
+
+        [KEY_Q] = 16,
+        [KEY_W] = 17,
+        [KEY_E] = 18,
+        [KEY_R] = 19,
+        [KEY_T] = 20,
+        [KEY_Y] = 21,
+        [KEY_U] = 22,
+        [KEY_I] = 23,
+        [KEY_O] = 24,
+        [KEY_P] = 25,
+
+        [KEY_LBRACKET] = 26,
+        [KEY_RBRACKET] = 27,
+        [KEY_ENTER] = 28,
+
+        [KEY_CAPSLOCK] = 58,
+
+        [KEY_A] = 30,
+        [KEY_S] = 31,
+        [KEY_D] = 32,
+        [KEY_F] = 33,
+        [KEY_G] = 34,
+        [KEY_H] = 35,
+        [KEY_J] = 36,
+        [KEY_K] = 37,
+        [KEY_L] = 38,
+        [KEY_SEMICOLON] = 39,
+        [KEY_APOSTROPHE] = 40,
+
+        [KEY_LSHIFT] = 42,
+
+        [KEY_Z] = 44,
+        [KEY_X] = 45,
+        [KEY_C] = 46,
+        [KEY_V] = 47,
+        [KEY_B] = 48,
+        [KEY_N] = 49,
+        [KEY_M] = 50,
+        [KEY_COMMA] = 51,
+        [KEY_PERIOD] = 52,
+        [KEY_SLASH] = 53,
+
+        [KEY_LCONTROL] = 29,
+        [KEY_LWIN] = 0, -- ???
+        [KEY_LALT] = 56,
+        [KEY_SPACE] = 57,
+        [KEY_RALT] = 184,
+        [KEY_RWIN] = 0, -- ???
+        [KEY_APP] = 0, -- ???
+        [KEY_RCONTROL] = 157,
+
+        [KEY_SCROLLLOCK] = 70,
+        [KEY_BREAK] = 197,
+
+        [KEY_INSERT] = 210,
+        [KEY_HOME] = 199,
+        [KEY_PAGEUP] = 201,
+
+        [KEY_DELETE] = 211,
+        [KEY_END] = 207,
+        [KEY_PAGEDOWN] = 209,
+
+        [KEY_UP] = 200,
+        [KEY_LEFT] = 203,
+        [KEY_DOWN] = 208,
+        [KEY_RIGHT] = 205,
+
+        [KEY_NUMLOCK] = 69,
+
+        [KEY_PAD_DIVIDE] = 181,
+        [KEY_PAD_MULTIPLY] = 55,
+        [KEY_PAD_MINUS] = 74,
+
+        [KEY_PAD_7] = 71,
+        [KEY_PAD_8] = 72,
+        [KEY_PAD_9] = 73,
+
+        [KEY_PAD_4] = 75,
+        [KEY_PAD_5] = 76,
+        [KEY_PAD_6] = 77,
+
+        [KEY_PAD_1] = 79,
+        [KEY_PAD_2] = 80,
+        [KEY_PAD_3] = 81,
+
+        [KEY_PAD_0] = 82,
+        [KEY_PAD_DECIMAL] = 83,
+
+        [KEY_PAD_PLUS] = 78,
+        [KEY_PAD_ENTER] = 156,
+    }
+
+    local key_map_layout = {
+        [KEY_NONE] = "",
+        [KEY_A] = "a",
+        [KEY_B] = "b",
+        [KEY_C] = "c",
+        [KEY_D] = "d",
+        [KEY_E] = "e",
+        [KEY_F] = "f",
+        [KEY_G] = "g",
+        [KEY_H] = "h",
+        [KEY_I] = "i",
+        [KEY_J] = "j",
+        [KEY_K] = "k",
+        [KEY_L] = "l",
+        [KEY_M] = "m",
+        [KEY_N] = "n",
+        [KEY_P] = "p",
+        [KEY_Q] = "q",
+        [KEY_R] = "r",
+        [KEY_S] = "s",
+        [KEY_T] = "t",
+        [KEY_U] = "u",
+        [KEY_V] = "v",
+        [KEY_W] = "w",
+        [KEY_X] = "x",
+        [KEY_Y] = "y",
+        [KEY_Z] = "z",
+
+        [KEY_SPACE] = " ",
+        [KEY_1] = "1",
+        [KEY_2] = "2",
+        [KEY_3] = "3",
+        [KEY_4] = "4",
+        [KEY_5] = "5",
+        [KEY_6] = "6",
+        [KEY_7] = "7",
+        [KEY_8] = "8",
+        [KEY_9] = "9",
+        [KEY_0] = "0",
+
+        [KEY_ENTER] = "\n",
+        [KEY_BACKSPACE] = 8,
+        [KEY_TAB] = 8,
+        [KEY_DELETE] = 127,
+
+        [KEY_LBRACKET] = "[",
+        [KEY_RBRACKET] = "]",
+        [KEY_SEMICOLON] = ";",
+        [KEY_APOSTROPHE] = "'",
+        [KEY_BACKQUOTE] = "`",
+        [KEY_COMMA] = ",",
+        [KEY_PERIOD] = ".",
+        [KEY_SLASH] = "/",
+        [KEY_BACKSLASH] = "\\",
+        [KEY_MINUS] = "-",
+        [KEY_EQUAL] = "=",
+    }
+
+    local function tocodepoint(symbol)
+        
+        if not isstring(symbol) then return symbol end
+        if symbol == "" then return 0 end
+
+        return utf8.codepoint(symbol)
+    end
+
     function DFrame:OnKeyCodePressed(code)
-        print(code)
+        if code == 104 then return end
+
+        local char = tocodepoint(key_map_layout[code] or "")
+        local code = key_map_lwjgl[code] or 0
+        sendkeyboard(code, char, true)
+    end
+
+    function DFrame:OnKeyCodeReleased(code)
+        if code == 104 then return end
+
+        local char = tocodepoint(key_map_layout[code] or "")
+        local code = key_map_lwjgl[code] or 0
+        sendkeyboard(code, char, false)
     end
 end)
 --[[

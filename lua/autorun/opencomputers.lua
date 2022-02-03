@@ -5,6 +5,8 @@ if SERVER then
 AddCSLuaFile("opencomputers/client/screen.lua")
 include("opencomputers/component_api.lua")
 
+util.AddNetworkString("opencomputers-send-screen-data")
+
 OpenComputers.Machines = OpenComputers.Machines or {}
 
 function OpenComputers.GetMachineEnt(machine_address)

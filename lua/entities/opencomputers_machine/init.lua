@@ -247,18 +247,21 @@ function ENT:InitComponents()
 	local COMPUTER_const = include("opencomputers/components/computer.lua")
 	local SCREEN_const = include("opencomputers/components/screen.lua")
 	local GPU_const = include("opencomputers/components/gpu.lua")
+	local KEYBOARD_const = include("opencomputers/components/keyboard.lua")
 
 	local eeprom = EEPROM_const(nil, "opencomputers/eeprom.txt", "EEPROM", true)
 	local filesys = FILESYS_const(nil, "opencomputers/loot/openos", "GMOD", true)
 	local computer = COMPUTER_const(self.machine.address)
 	local screen = SCREEN_const(nil, 80, 25, 3, self.machine.address)
 	local gpu = GPU_const(nil, 80, 25, 3, self.machine.address)
+	local keyboard = KEYBOARD_const(nil, self.machine.address)
 
 	self:ConnectComponent(computer)
 	self:ConnectComponent(eeprom)
 	self:ConnectComponent(filesys)
 	self:ConnectComponent(screen)
 	self:ConnectComponent(gpu)
+	self:ConnectComponent(keyboard)
 end
 
 function ENT:StartMachine()

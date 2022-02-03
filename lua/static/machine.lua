@@ -1474,6 +1474,7 @@ local libcomputer = {
         local deadline = computer.uptime() + (type(timeout) == "number" and timeout or math.huge)
         repeat
             local signal = table.pack(coroutine.yield(deadline - computer.uptime()))
+            
             if signal.n > 0 then
                 return table.unpack(signal, 1, signal.n)
             end
@@ -1602,7 +1603,6 @@ local function main()
         else
             --print("if 3")
             args = table.pack(coroutine.yield(result[2])) -- system yielded value
-            args = wrapUserdata(args)
         end
     end
     

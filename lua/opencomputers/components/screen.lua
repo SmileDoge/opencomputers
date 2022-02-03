@@ -128,15 +128,6 @@ local function getColor(value, sel, tier)
 end
 ]]
 
-util.AddNetworkString("opencomputers-send-screen-data")
-
-net.Receive("opencomputers-send-screen-data", function(_, ply)
-    local typ = net.ReadUInt(8)
-    local machine_address = net.ReadString()
-    local screen_address = net.ReadString()
-end)
-
-
 local function init_buffer(width, height)
     local tbl = {}
 
